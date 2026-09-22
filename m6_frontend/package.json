@@ -1,0 +1,6 @@
+{
+  "name": "netguard-ai-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NetGuard AI React + Vite frontend"
+}
