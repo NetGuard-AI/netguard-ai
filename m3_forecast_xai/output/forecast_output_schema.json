@@ -1,0 +1,15 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "title":"forecast_output_schema",
+  "type":"object",
+  "required":["attack_probability_timeline","trend","predicted_stage","stage_confidence","top_features","explanation_text"],
+  "properties":{
+    "attack_probability_timeline":{"type":"array","items":{"type":"number","minimum":0.0,"maximum":1.0}},
+    "trend":{"type":"string","enum":["rising","stable","falling"]},
+    "predicted_stage":{"type":"string","enum":["Reconnaissance","Initial Access","Lateral Movement","Command & Control","Exfiltration","Uncertain"]},
+    "stage_confidence":{"type":"string","enum":["confident","uncertain"]},
+    "top_features":{"type":"array","items":{"type":"object","required":["feature","contribution"],"properties":{"feature":{"type":"string"},"contribution":{"type":"number"}},"additionalProperties":false}},
+    "explanation_text":{"type":"string"}
+  },
+  "additionalProperties":false
+}

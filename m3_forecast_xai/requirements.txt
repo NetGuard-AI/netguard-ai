@@ -1,1 +1,5 @@
-# Add only packages actually imported by M3/M4 when implementation begins.
+numpy
+torch
+shap
+jsonschema
+pytest
