@@ -1,16 +1,21 @@
-# Module M1 — Data & Network Telemetry (Kavya)
+# Module 1 — Data & Network Telemetry (Kavya)
 
 ## What this module does
-Builds the traffic-to-network-state data pipeline and prepares the frozen state/sequence artifacts consumed by M2.
+Ingests the pre-cleaned CSE-CIC-IDS2018 CSVs, fits one shared scaler and label encoder on the complete cleaned dataset, aggregates chronological flows into fixed-size network states, and builds leakage-safe temporal sequences for M2.
 
-## Inputs
-CICIDS2017 source data in the canonical day order defined by the SRS.
+## Dataset status
+All 10 required capture days are present and gap-free by `flow_seq`: 02-14, 02-15, 02-16, 02-20, 02-21, 02-22, 02-23, 02-28, 03-01, 03-02 (2018).
 
-## Outputs
-The exact M1 output artifacts defined by the SRS, including the feature schema, fitted preprocessing artifacts, train/validation/test sequences and targets, and replay stream.
+## Frozen M1 contract
+- BIN_SIZE = 50 flows per state
+- SEQUENCE_LENGTH = 20 states
+- STATE_FEATURE_DIM = 79 = 78 flow features + attack_rate
+- One shared StandardScaler and LabelEncoder fitted on the full cleaned dataset
+- Chronological state split: 70% train / 15% validation / 15% test
+- Sequences are built separately inside each split; no sequence crosses a split boundary
 
-## How to run
-Implementation commands will be added when M1 is implemented.
+## Handoff
+M2 reads only state_sequences_*.npy, next_state_*.npy, and feature_schema.json, as specified by the SRS.
 
-## Status
-Repository scaffold only; implementation pending.
+## Note on repository storage
+The generated NumPy artifacts are large binary files. They remain in the verified M1 handoff ZIP and are intentionally not committed to ordinary GitHub storage because several files exceed GitHub's 100 MB per-file limit. The source pipeline and schema are committed here.

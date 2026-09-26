@@ -1,0 +1,77 @@
+{
+  "dataset": "CSE-CIC-IDS2018",
+  "days_present": [
+    "02-14-2018",
+    "02-15-2018",
+    "02-16-2018",
+    "02-20-2018",
+    "02-21-2018",
+    "02-22-2018",
+    "02-23-2018",
+    "02-28-2018",
+    "03-01-2018",
+    "03-02-2018"
+  ],
+  "days_missing": [],
+  "status": "complete",
+  "num_segments": 1,
+  "bin_size": 50,
+  "sequence_length": 20,
+  "state_feature_dim": 79,
+  "split_fracs": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "split_sizes_states": {
+    "train": 166966,
+    "val": 35778,
+    "test": 35779
+  },
+  "split_sizes_sequences": {
+    "train": 166946,
+    "val": 35758,
+    "test": 35759
+  },
+  "split_method": "chronological state-level split before sequence construction; no sequence crosses a split boundary",
+  "sequence_boundary_policy": "Build 20-state windows independently inside train, validation, and test.",
+  "label_classes": {
+    "Benign": 0,
+    "Bot": 1,
+    "Brute Force -Web": 2,
+    "Brute Force -XSS": 3,
+    "DDOS attack-HOIC": 4,
+    "DDOS attack-LOIC-UDP": 5,
+    "DDoS attacks-LOIC-HTTP": 6,
+    "DoS attacks-GoldenEye": 7,
+    "DoS attacks-Hulk": 8,
+    "DoS attacks-SlowHTTPTest": 9,
+    "DoS attacks-Slowloris": 10,
+    "FTP-BruteForce": 11,
+    "Infilteration": 12,
+    "SQL Injection": 13,
+    "SSH-Bruteforce": 14
+  },
+  "artifacts": {
+    "scaler": "scaler.pkl",
+    "encoders": "encoders.pkl",
+    "sequence_files": {
+      "train": [
+        "state_sequences_train.npy",
+        "next_state_train.npy",
+        "attack_label_train.npy"
+      ],
+      "val": [
+        "state_sequences_val.npy",
+        "next_state_val.npy",
+        "attack_label_val.npy"
+      ],
+      "test": [
+        "state_sequences_test.npy",
+        "next_state_test.npy",
+        "attack_label_test.npy"
+      ]
+    },
+    "replay_stream_file": "replay_stream.csv"
+  }
+}
