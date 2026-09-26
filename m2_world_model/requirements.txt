@@ -1,1 +1,2 @@
-# Add only packages actually imported by M2 when implementation begins.
+torch==2.10.0
+numpy==2.3.5
