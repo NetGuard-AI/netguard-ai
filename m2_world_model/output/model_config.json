@@ -1,0 +1,7 @@
+{
+  "input_dim": 79,
+  "hidden_dim": 32,
+  "num_layers": 1,
+  "sequence_length": 20,
+  "model_type": "GRU"
+}
