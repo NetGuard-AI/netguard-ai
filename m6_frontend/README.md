@@ -1,16 +1,28 @@
 # Module M6 — NetGuard Application (Ronal)
 
-## What this module does
-Provides the citizen and organization-facing NetGuard application and consumes the backend API.
+Final reviewed M6 application package is supplied in the ChatGPT conversation as:
+NetGuard_AI_M6_Ronal_Final_Integrated.zip
 
-## Inputs
-Live backend API responses from M5/M7.
+The application consumes the final M5/M7 REST contract and surfaces M3/M4
+forecast/explainability plus M7 knowledge/help resources.
 
-## Outputs
-React + Vite application implementing the dashboards, authentication, security zone, forecast views, history, evidence access, knowledge/help pages, and related UI defined by the SRS.
+Final UI endpoints:
+- GET /predict
+- GET /rollout?k=8
+- GET /security-zone
+- GET /explain
+- GET /alerts
+- POST /alerts/trigger-attack
+- GET /knowledge-center
+- GET /help-resources
 
-## How to run
-Implementation commands will be added when M6 is implemented.
+The UI does not load M1/M2 artifacts and does not call /traffic, /stats, or
+/ws/live. No traffic or WebSocket values are fabricated.
 
-## Status
-Repository scaffold only; implementation pending.
+Run from the supplied netguard-ai directory:
+npm install
+npm run typecheck
+npm run build
+npm run dev
+
+The reviewed ZIP's SHA-256 is recorded in FINAL_DELIVERABLE_SHA256.txt.
