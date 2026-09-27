@@ -1,1 +1,10 @@
-# Add only packages actually imported by M5/M7 when implementation begins.
+fastapi
+uvicorn[standard]
+pydantic
+numpy
+torch
+shap
+python-jose
+passlib[bcrypt]
+reportlab
+pytest
