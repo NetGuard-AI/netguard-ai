@@ -1,0 +1,11 @@
+NetGuard_AI_M6_Ronal_Final_Integrated.zip
+SHA-256:
+4cd7f48dd415688d6b0dcb5a1371f86ac0b44cb5b9fd790a67a9d1c7d0d1cedb
+
+Review fixes:
+- M6 naming corrected from Module 5 Dashboard.
+- Replaced unavailable live-traffic placeholder with real M4 explainability.
+- Added M7 Knowledge Center and Cyber Safety & Assistance.
+- Polling changed from 3s to 10s.
+- Removed assumptions about /traffic, /stats and /ws/live.
+- No scaler/encoder/model artifacts are imported by the frontend.
