@@ -119,6 +119,41 @@ def build_states(files, feature_cols, scaler):
         return np.empty((0, feature_dim + 1), dtype=np.float32)
     return np.concatenate(state_parts, axis=0)
 
+def write_replay_stream(out_dir, files, feature_cols):
+    """Write the canonical replay stream: 78 features + Label + capture_day + flow_seq."""
+    output_path = os.path.join(out_dir, "replay_stream.csv")
+    columns = feature_cols + [LABEL_COL]
+    flow_seq = 0
+    wrote_header = False
+
+    for info in files:
+        for chunk in iter_batches(info["path"], columns):
+            chunk = chunk.copy()
+            n_rows = len(chunk)
+            chunk["capture_day"] = info["day"]
+            chunk["flow_seq"] = np.arange(
+                flow_seq,
+                flow_seq + n_rows,
+                dtype=np.int64,
+            )
+            flow_seq += n_rows
+
+            ordered = feature_cols + [LABEL_COL, "capture_day", "flow_seq"]
+            chunk.to_csv(
+                output_path,
+                mode="a",
+                header=not wrote_header,
+                index=False,
+                columns=ordered,
+            )
+            wrote_header = True
+
+    if not wrote_header:
+        raise ValueError("Replay stream could not be created: no rows found.")
+
+    print(f"Replay stream written: {output_path} ({flow_seq:,} rows)")
+
+
 def build_sequences(states):
     n_states, state_dim = states.shape
     n_sequences = max(0, n_states - SEQUENCE_LENGTH)
@@ -159,6 +194,7 @@ def write_schema(out_dir, feature_cols, encoder, state_sizes, sequence_sizes, fi
             {"filename": os.path.basename(item["path"]), "capture_day": item["day"], "rows": item["n_rows"]}
             for item in files
         ],
+        "replay_stream": {"filename": "replay_stream.csv", "columns": 81},
         "artifacts": {
             "scaler": "scaler.pkl",
             "encoders": "encoders.pkl",
@@ -190,6 +226,11 @@ def main():
     with open(os.path.join(args.out_dir, "scaler.pkl"), "wb") as handle:
         pickle.dump(scaler, handle)
     print(f"Scaler fitted on {int(scaler.n_samples_seen_):,} rows.")
+    print("Building replay stream...")
+    replay_path = os.path.join(args.out_dir, "replay_stream.csv")
+    if os.path.exists(replay_path):
+        os.remove(replay_path)
+    write_replay_stream(args.out_dir, files, feature_cols)
     print("Building chronological network states...")
     states = build_states(files, feature_cols, scaler)
     if states.shape[1] != 79:
