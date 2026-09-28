@@ -7,7 +7,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_STATES = REPO_ROOT / "m1_data" / "output" / "state_sequences_test.npy"
 BIN_SIZE = 50
 SEQUENCE_LENGTH = 20
-STATE_DIM = 79
+STATE_DIM = 78
 
 class PreparedStateProvider:
     """Consumes prepared M1 states; never performs M1 scaling or encoding."""
