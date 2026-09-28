@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "NetGuard AI"
+description = "A predictive cybersecurity dashboard for citizens and organizations. It visualizes current security zones, forecast attack probability, explainable AI signals, alerts, incidents, connected devices, safety guidance, and official cyber-help resources."
+version = "1.0.0"
+id = "artifacts/netguard-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19065
+
+[services.development]
+run = "pnpm --filter @workspace/netguard-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/netguard-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/netguard-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19065"
+BASE_PATH = "/"

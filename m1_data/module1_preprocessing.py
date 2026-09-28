@@ -2,7 +2,7 @@
 NetGuard AI — M1 Data & Network Telemetry
 Final preprocessing for the cleaned CSE-CIC-IDS2018 Parquet source.
 
-The source contains 78 numeric flow features + Label and does not contain
+The source contains 77 numeric flow features + Label and does not contain
 flow_seq/capture_day. Capture dates are inferred from the canonical filenames.
 Rows are processed in canonical day order while preserving stored row order.
 """
@@ -14,6 +14,8 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 BIN_SIZE = 50
 SEQUENCE_LENGTH = 20
+EXPECTED_FLOW_FEATURES = 77
+STATE_FEATURE_DIM = EXPECTED_FLOW_FEATURES + 1
 TRAIN_FRAC = 0.70
 VAL_FRAC = 0.15
 CHUNK_SIZE = 300_000
@@ -63,8 +65,11 @@ def discover_files(raw_dir):
 def get_feature_cols(sample_file):
     columns = pq.ParquetFile(sample_file).schema_arrow.names
     columns = [column for column in columns if column != LABEL_COL]
-    if len(columns) != 78:
-        raise ValueError(f"Expected 78 numeric flow features + Label; found {len(columns)} non-label columns")
+    if len(columns) != EXPECTED_FLOW_FEATURES:
+        raise ValueError(
+            f"Expected {EXPECTED_FLOW_FEATURES} numeric flow features + Label; "
+            f"found {len(columns)} non-label columns"
+        )
     return columns
 
 def iter_batches(path, columns):
@@ -120,7 +125,7 @@ def build_states(files, feature_cols, scaler):
     return np.concatenate(state_parts, axis=0)
 
 def write_replay_stream(out_dir, files, feature_cols):
-    """Write the canonical replay stream: 78 features + Label + capture_day + flow_seq."""
+    """Write the canonical replay stream: 77 features + Label + capture_day + flow_seq."""
     output_path = os.path.join(out_dir, "replay_stream.csv")
     columns = feature_cols + [LABEL_COL]
     flow_seq = 0
@@ -179,7 +184,8 @@ def write_schema(out_dir, feature_cols, encoder, state_sizes, sequence_sizes, fi
         "num_segments": 1,
         "bin_size": BIN_SIZE,
         "sequence_length": SEQUENCE_LENGTH,
-        "state_feature_dim": 79,
+        "state_feature_dim": STATE_FEATURE_DIM,
+        "flow_feature_count": len(feature_cols),
         "feature_columns": feature_cols,
         "label_column": LABEL_COL,
         "label_classes": {str(value): int(index) for index, value in enumerate(encoder.classes_)},
@@ -194,7 +200,7 @@ def write_schema(out_dir, feature_cols, encoder, state_sizes, sequence_sizes, fi
             {"filename": os.path.basename(item["path"]), "capture_day": item["day"], "rows": item["n_rows"]}
             for item in files
         ],
-        "replay_stream": {"filename": "replay_stream.csv", "columns": 81},
+        "replay_stream": {"filename": "replay_stream.csv", "columns": STATE_FEATURE_DIM + 2},
         "artifacts": {
             "scaler": "scaler.pkl",
             "encoders": "encoders.pkl",
@@ -233,8 +239,8 @@ def main():
     write_replay_stream(args.out_dir, files, feature_cols)
     print("Building chronological network states...")
     states = build_states(files, feature_cols, scaler)
-    if states.shape[1] != 79:
-        raise ValueError(f"Expected state dimension 79; found {states.shape[1]}")
+    if states.shape[1] != STATE_FEATURE_DIM:
+        raise ValueError(f"Expected state dimension {STATE_FEATURE_DIM}; found {states.shape[1]}")
     n_states = len(states)
     train_end = int(n_states * TRAIN_FRAC)
     val_end = train_end + int(n_states * VAL_FRAC)

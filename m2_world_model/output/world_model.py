@@ -7,7 +7,7 @@ import torch.nn as nn
 
 
 class WorldModel(nn.Module):
-    """GRU world model that predicts the next 79-dimensional network state."""
+    """GRU world model that predicts the next state vector for the configured 78-dimensional contract."""
 
     def __init__(
         self,
