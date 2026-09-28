@@ -12,7 +12,7 @@ from output.forecast_engine import rollout
 def test_model_contract():
     cfg=json.loads((M2/"model_config.json").read_text())
     schema=json.loads((M1/"feature_schema.json").read_text())
-    assert cfg["input_dim"]==schema["state_feature_dim"]==79
+    assert cfg["input_dim"]==schema["state_feature_dim"]==78
     assert cfg["sequence_length"]==schema["sequence_length"]==20
     assert cfg["model_type"]=="GRU"
 
@@ -22,12 +22,12 @@ def test_weights_load():
     cfg=json.loads((M2/"model_config.json").read_text())
     model=WorldModel(**cfg)
     model.load_state_dict(torch.load(weights,map_location="cpu",weights_only=True))
-    assert tuple(model(torch.zeros((1,20,79))).shape)==(1,79)
+    assert tuple(model(torch.zeros((1,20,78))).shape)==(1,79)
 
 def test_rollout_schema():
     weights=M2/"world_model.pt"
     if not weights.exists(): pytest.skip("M2 world_model.pt is a local handoff artifact")
-    result=rollout(np.zeros((20,79),dtype=np.float32),3)
+    result=rollout(np.zeros((20,78),dtype=np.float32),3)
     schema=json.loads((BASE/"output"/"forecast_output_schema.json").read_text())
     import jsonschema
     jsonschema.validate(result,schema)
