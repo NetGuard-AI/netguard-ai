@@ -1,5 +1,5 @@
 {
-  "input_dim": 79,
+  "input_dim": 78,
   "hidden_dim": 32,
   "num_layers": 1,
   "sequence_length": 20,
