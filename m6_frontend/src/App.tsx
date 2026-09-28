@@ -424,7 +424,7 @@ export default function App() {
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <Metric label="World model" value="GRU" />
-              <Metric label="State dimension" value="79" />
+              <Metric label="State dimension" value="78" />
               <Metric label="Sequence length" value="20" />
               <Metric label="Forecast horizon" value={`${timeline.length || 8} steps`} />
             </div>
