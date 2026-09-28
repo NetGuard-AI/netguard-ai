@@ -1,7 +1,7 @@
 # Module 1 — Data & Network Telemetry (Kavya)
 
 ## What this module does
-Ingests the pre-cleaned CSE-CIC-IDS2018 CSVs, fits one shared scaler and label encoder on the complete cleaned dataset, aggregates chronological flows into fixed-size network states, and builds leakage-safe temporal sequences for M2.
+Ingests the pre-cleaned CSE-CIC-IDS2018 Parquet files, fits one shared scaler and label encoder on the complete cleaned dataset, aggregates chronological flows into fixed-size network states, and builds leakage-safe temporal sequences for M2.
 
 ## Dataset status
 All 10 required capture days are present and gap-free by `flow_seq`: 02-14, 02-15, 02-16, 02-20, 02-21, 02-22, 02-23, 02-28, 03-01, 03-02 (2018).
@@ -9,7 +9,7 @@ All 10 required capture days are present and gap-free by `flow_seq`: 02-14, 02-1
 ## Frozen M1 contract
 - BIN_SIZE = 50 flows per state
 - SEQUENCE_LENGTH = 20 states
-- STATE_FEATURE_DIM = 79 = 78 flow features + attack_rate
+- STATE_FEATURE_DIM = 78 = 77 flow features + attack_rate
 - One shared StandardScaler and LabelEncoder fitted on the full cleaned dataset
 - Chronological state split: 70% train / 15% validation / 15% test
 - Sequences are built separately inside each split; no sequence crosses a split boundary
