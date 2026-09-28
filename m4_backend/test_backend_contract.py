@@ -12,6 +12,6 @@ def test_required_routes_are_present():
         assert route in source
 
 def test_no_scaler_or_placeholder_implementation():
-    source = "\n".join(p.read_text(encoding="utf-8") for p in ROOT.glob("*.py"))
+    source = "\n".join(p.read_text(encoding="utf-8") for p in ROOT.glob("*.py") if p.name != "test_backend_contract.py")
     assert "StandardScaler" not in source
     assert "generate_placeholder_scaler" not in source
