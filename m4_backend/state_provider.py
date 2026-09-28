@@ -17,6 +17,10 @@ class PreparedStateProvider:
         self.flow_count = 0
         self.state_count = 0
 
+        if os.getenv("NETGUARD_DEMO_BOOTSTRAP", "").lower() in {"1", "true", "yes"}:
+            self.flow_count = SEQUENCE_LENGTH * BIN_SIZE
+            self.state_count = SEQUENCE_LENGTH
+
     def _load(self):
         if self._sequences is None:
             if not self.path.exists():
