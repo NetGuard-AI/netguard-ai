@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: netguard-ai-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r m4_backend/requirements.txt
+    startCommand: uvicorn m4_backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NETGUARD_DEMO_BOOTSTRAP
+        value: "true"
+      - key: NETGUARD_JWT_SECRET
+        generateValue: true
