@@ -19,3 +19,5 @@ node_modules/
 dist/
 build/
 .DS_Store
+!m1_data/output/deployment_bootstrap.npy
+!m2_world_model/output/world_model.pt
