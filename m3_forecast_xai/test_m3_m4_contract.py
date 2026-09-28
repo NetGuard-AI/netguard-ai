@@ -22,7 +22,7 @@ def test_weights_load():
     cfg=json.loads((M2/"model_config.json").read_text())
     model=WorldModel(**cfg)
     model.load_state_dict(torch.load(weights,map_location="cpu",weights_only=True))
-    assert tuple(model(torch.zeros((1,20,78))).shape)==(1,79)
+    assert tuple(model(torch.zeros((1,20,78))).shape)==(1,78)
 
 def test_rollout_schema():
     weights=M2/"world_model.pt"
