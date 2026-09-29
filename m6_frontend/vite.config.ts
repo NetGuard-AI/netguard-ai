@@ -4,7 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/netguard-ai/',
+  // GitHub Pages serves under /netguard-ai/, while Vercel serves from the domain root.
+  base: process.env.VERCEL ? '/' : '/netguard-ai/',
   root: '.',
   build: {
     outDir: 'dist',
