@@ -19,3 +19,10 @@ node_modules/
 dist/
 build/
 .DS_Store
+
+# Deployment artifacts included in the Render deployment.
+# The full state_sequences_test.npy remains excluded because it is multi-GB.
+!m1_data/output/
+!m1_data/output/deployment_bootstrap.npy
+!m2_world_model/output/
+!m2_world_model/output/world_model.pt

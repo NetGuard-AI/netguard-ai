@@ -82,6 +82,18 @@ def _confidence(result):
         return "low"
     return "unknown"
 
+@app.get("/health")
+def health():
+    """Lightweight deployment health check that validates the model artifact."""
+    try:
+        if not provider.path.exists():
+            raise RuntimeError(f"State bootstrap missing: {provider.path}")
+        from m3_forecast_xai.output.forecast_engine import _load_model
+        _load_model()
+        return {"status": "ok", "model": "loaded", "state_bootstrap": str(provider.path)}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
 @app.post("/signup", response_model=AuthResponse)
 def signup(payload: AuthRequest):
     if db.get_user(payload.email):
