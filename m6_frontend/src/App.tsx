@@ -125,9 +125,15 @@ export default function App() {
   const load = useCallback(async () => {
     setApiError('');
 
-    const results = await Promise.allSettled([
-      getJson<Prediction>('/predict'),
+    // /predict, /security-zone and /explain depend on /rollout creating
+    // the latest forecast. Fetch the forecast first to avoid a startup race
+    // where dependent endpoints return 409 before the forecast exists.
+    const forecastResult = await Promise.allSettled([
       getJson<Forecast>('/rollout?k=8'),
+    ]).then(([result]) => result);
+
+    const dependentResults = await Promise.allSettled([
+      getJson<Prediction>('/predict'),
       getJson<SecurityZone>('/security-zone'),
       getJson<Explain>('/explain'),
       getJson<Alert[]>('/alerts'),
@@ -137,23 +143,22 @@ export default function App() {
 
     const [
       predictionResult,
-      forecastResult,
       zoneResult,
       explainResult,
       alertsResult,
       knowledgeResult,
       helpResult,
-    ] = results;
+    ] = dependentResults;
 
-    if (predictionResult.status === 'fulfilled') setPrediction(predictionResult.value);
     if (forecastResult.status === 'fulfilled') setForecast(forecastResult.value);
+    if (predictionResult.status === 'fulfilled') setPrediction(predictionResult.value);
     if (zoneResult.status === 'fulfilled') setSecurityZone(zoneResult.value);
     if (explainResult.status === 'fulfilled') setExplain(explainResult.value);
     if (alertsResult.status === 'fulfilled') setAlerts(alertsResult.value);
     if (knowledgeResult.status === 'fulfilled') setKnowledge(knowledgeResult.value);
     if (helpResult.status === 'fulfilled') setHelpResources(helpResult.value);
 
-    const failed = results.filter((result) => result.status === 'rejected').length;
+    const failed = [forecastResult, ...dependentResults].filter((result) => result.status === 'rejected').length;
     if (failed) {
       setApiError(
         `${failed} backend request${failed > 1 ? 's are' : ' is'} unavailable. Only values supplied by the connected backend are shown.`,
