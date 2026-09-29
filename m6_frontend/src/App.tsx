@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -121,58 +121,82 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [injecting, setInjecting] = useState(false);
   const [lastSync, setLastSync] = useState('—');
+  const loadInFlight = useRef<Promise<void> | null>(null);
 
-  const load = useCallback(async () => {
-    setApiError('');
+  const load = useCallback(() => {
+    // Render Free can take a while to wake after inactivity. Do not let the
+    // 10-second polling interval create overlapping requests while a previous
+    // load is still waking the backend up.
+    if (loadInFlight.current) return loadInFlight.current;
 
-    // /predict, /security-zone and /explain depend on /rollout creating
-    // the latest forecast. Fetch the forecast first to avoid a startup race
-    // where dependent endpoints return 409 before the forecast exists.
-    const forecastResult = await Promise.allSettled([
-      getJson<Forecast>('/rollout?k=8'),
-    ]).then(([result]) => result);
+    const run = (async () => {
+      try {
+        // /predict, /security-zone and /explain depend on /rollout creating
+        // the latest forecast. Treat /rollout as the wake-up/readiness request
+        // so we do not fire six more requests while Render is still asleep.
+        let forecast: Forecast;
+        try {
+          forecast = await getJson<Forecast>('/rollout?k=8');
+        } catch {
+          setApiError('Backend is waking up. Retrying automatically…');
+          return;
+        }
 
-    const dependentResults = await Promise.allSettled([
-      getJson<Prediction>('/predict'),
-      getJson<SecurityZone>('/security-zone'),
-      getJson<Explain>('/explain'),
-      getJson<Alert[]>('/alerts'),
-      getJson<KnowledgeItem[]>('/knowledge-center'),
-      getJson<HelpResource[]>('/help-resources'),
-    ]);
+        setForecast(forecast);
 
-    const [
-      predictionResult,
-      zoneResult,
-      explainResult,
-      alertsResult,
-      knowledgeResult,
-      helpResult,
-    ] = dependentResults;
+        const dependentResults = await Promise.allSettled([
+          getJson<Prediction>('/predict'),
+          getJson<SecurityZone>('/security-zone'),
+          getJson<Explain>('/explain'),
+          getJson<Alert[]>('/alerts'),
+          getJson<KnowledgeItem[]>('/knowledge-center'),
+          getJson<HelpResource[]>('/help-resources'),
+        ]);
 
-    if (forecastResult.status === 'fulfilled') setForecast(forecastResult.value);
-    if (predictionResult.status === 'fulfilled') setPrediction(predictionResult.value);
-    if (zoneResult.status === 'fulfilled') setSecurityZone(zoneResult.value);
-    if (explainResult.status === 'fulfilled') setExplain(explainResult.value);
-    if (alertsResult.status === 'fulfilled') setAlerts(alertsResult.value);
-    if (knowledgeResult.status === 'fulfilled') setKnowledge(knowledgeResult.value);
-    if (helpResult.status === 'fulfilled') setHelpResources(helpResult.value);
+        const [
+          predictionResult,
+          zoneResult,
+          explainResult,
+          alertsResult,
+          knowledgeResult,
+          helpResult,
+        ] = dependentResults;
 
-    const failed = [forecastResult, ...dependentResults].filter((result) => result.status === 'rejected').length;
-    if (failed) {
-      setApiError(
-        `${failed} backend request${failed > 1 ? 's are' : ' is'} unavailable. Only values supplied by the connected backend are shown.`,
-      );
-    }
+        if (predictionResult.status === 'fulfilled') setPrediction(predictionResult.value);
+        if (zoneResult.status === 'fulfilled') setSecurityZone(zoneResult.value);
+        if (explainResult.status === 'fulfilled') setExplain(explainResult.value);
+        if (alertsResult.status === 'fulfilled') setAlerts(alertsResult.value);
+        if (knowledgeResult.status === 'fulfilled') setKnowledge(knowledgeResult.value);
+        if (helpResult.status === 'fulfilled') setHelpResources(helpResult.value);
 
-    setLastSync(
-      new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }),
-    );
-    setLoading(false);
+        const failed = dependentResults.filter((result) => result.status === 'rejected').length;
+        if (failed) {
+          setApiError(
+            `${failed} backend request${failed > 1 ? 's are' : ' is'} temporarily unavailable. Retrying automatically…`,
+          );
+        } else {
+          setApiError('');
+        }
+
+        setLastSync(
+          new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+        );
+        setLoading(false);
+      } finally {
+        // Only clear the promise if it is still this load. This prevents an
+        // older completion from unlocking a newer load accidentally.
+        if (loadInFlight.current === run) {
+          loadInFlight.current = null;
+        }
+      }
+    })();
+
+    loadInFlight.current = run;
+    return run;
   }, []);
 
   useEffect(() => {
