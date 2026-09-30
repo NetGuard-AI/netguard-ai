@@ -6,6 +6,9 @@ import numpy as np
 import shap
 import torch
 
+# Keep CPU memory predictable on small deployment instances such as Render Free.
+torch.set_num_threads(1)
+
 REPO_ROOT=Path(__file__).resolve().parents[2]
 M1_SCHEMA=REPO_ROOT/"m1_data"/"output"/"feature_schema.json"
 M2_DIR=REPO_ROOT/"m2_world_model"/"output"
@@ -22,6 +25,8 @@ SEQUENCE_LENGTH=int(CONFIG["sequence_length"])
 ATTACK_RATE_INDEX=INPUT_DIM-1
 _model=None
 _names_cache=None
+_explanation_cache_key=None
+_explanation_cache_value=None
 
 def _load_model():
     global _model
@@ -51,14 +56,22 @@ class _AttackRateWrapper(torch.nn.Module):
         return self.model(x)[:,ATTACK_RATE_INDEX:ATTACK_RATE_INDEX+1]
 
 def explain(state_vector: np.ndarray)->dict:
+    global _explanation_cache_key, _explanation_cache_value
     state=np.asarray(state_vector,dtype=np.float32)
     if state.shape!=(INPUT_DIM,):
         raise ValueError(f"state_vector must have shape ({INPUT_DIM},); got {state.shape}")
     if not np.isfinite(state).all():
         raise ValueError("state_vector contains NaN or infinite values")
+
+    # Rollout polling can request the exact same deterministic forecast repeatedly.
+    # Reusing the SHAP result avoids repeated gradient allocations and memory spikes.
+    cache_key = state.tobytes()
+    if cache_key == _explanation_cache_key and _explanation_cache_value is not None:
+        return _explanation_cache_value
+
     window=np.repeat(state[None,:],SEQUENCE_LENGTH,axis=0)
     sample=torch.from_numpy(window).unsqueeze(0)
-    background=torch.zeros((4,SEQUENCE_LENGTH,INPUT_DIM),dtype=torch.float32)
+    background=torch.zeros((1,SEQUENCE_LENGTH,INPUT_DIM),dtype=torch.float32)
     values=shap.GradientExplainer(_AttackRateWrapper(_load_model()),background).shap_values(sample)
     values=np.asarray(values[0] if isinstance(values,list) else values)
     if values.ndim==4 and values.shape[-1]==1: values=values[...,0]
@@ -75,4 +88,7 @@ def explain(state_vector: np.ndarray)->dict:
         text=f"Risk is driven mainly by unusual {top[0]['feature']} behavior."
     else:
         text="No single feature stood out strongly in this forecast."
-    return {"top_features":top,"explanation_text":text}
+    result={"top_features":top,"explanation_text":text}
+    _explanation_cache_key = cache_key
+    _explanation_cache_value = result
+    return result
