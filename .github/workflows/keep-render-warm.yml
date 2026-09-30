@@ -1,0 +1,16 @@
+name: Keep NetGuard AI API warm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keep-warm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render API
+        run: curl --fail --silent --show-error --max-time 120 https://netguard-ai-api-lh0a.onrender.com/health
