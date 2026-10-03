@@ -147,7 +147,6 @@ export default function App() {
         const dependentResults = await Promise.allSettled([
           getJson<Prediction>('/predict'),
           getJson<SecurityZone>('/security-zone'),
-          getJson<Explain>('/explain'),
           getJson<Alert[]>('/alerts'),
           getJson<KnowledgeItem[]>('/knowledge-center'),
           getJson<HelpResource[]>('/help-resources'),
@@ -156,7 +155,6 @@ export default function App() {
         const [
           predictionResult,
           zoneResult,
-          explainResult,
           alertsResult,
           knowledgeResult,
           helpResult,
@@ -164,7 +162,6 @@ export default function App() {
 
         if (predictionResult.status === 'fulfilled') setPrediction(predictionResult.value);
         if (zoneResult.status === 'fulfilled') setSecurityZone(zoneResult.value);
-        if (explainResult.status === 'fulfilled') setExplain(explainResult.value);
         if (alertsResult.status === 'fulfilled') setAlerts(alertsResult.value);
         if (knowledgeResult.status === 'fulfilled') setKnowledge(knowledgeResult.value);
         if (helpResult.status === 'fulfilled') setHelpResources(helpResult.value);
@@ -201,7 +198,11 @@ export default function App() {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 10000);
+    // The /rollout endpoint runs the model and SHAP explanation. Ten-second
+    // polling was unnecessarily aggressive for a static demo state and can
+    // increase memory pressure on small backend instances. Manual Refresh and
+    // Inject Attack still trigger an immediate load.
+    const timer = window.setInterval(() => void load(), 60000);
     return () => window.clearInterval(timer);
   }, [load]);
 
@@ -232,9 +233,7 @@ export default function App() {
     () => alerts.filter((alert) => !alert.resolved),
     [alerts],
   );
-  const features = explain?.top_features?.length
-    ? explain.top_features
-    : forecast?.top_features ?? [];
+  const features = forecast?.top_features ?? [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -414,8 +413,7 @@ export default function App() {
             subtitle="Top contributing features supplied by M4"
           >
             <p className="text-sm leading-6 text-muted-foreground">
-              {explain?.explanation_text ??
-                forecast?.explanation_text ??
+              {forecast?.explanation_text ??
                 'No explanation was supplied by the backend.'}
             </p>
             <div className="mt-5 space-y-2">
@@ -473,7 +471,7 @@ export default function App() {
             </div>
             <div className="mt-5 space-y-3">
               <Status label="API base" value={API_BASE} />
-              <Status label="Polling" value="Every 10 seconds" />
+              <Status label="Polling" value="Every 60 seconds" />
               <Status label="Forecast" value="/rollout?k=8" />
               <Status label="Live traffic" value="Not exposed by final backend" />
             </div>
